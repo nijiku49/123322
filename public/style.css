@@ -303,7 +303,7 @@ button:disabled {
 
 .card-media {
   position: relative;
-  height: 170px;
+  height: 260px;
   flex: 0 0 auto;
   overflow: hidden;
   background: linear-gradient(135deg, var(--blush) 0%, var(--gold) 55%, var(--sage) 100%);
