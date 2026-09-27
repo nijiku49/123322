@@ -1,30 +1,19 @@
-@font-face {
-  font-family: 'Go Mono';
-  src: url('https://cdn.jsdelivr.net/gh/golang/image@master/font/gofont/ttfs/Go-Mono.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Go Mono';
-  src: url('https://cdn.jsdelivr.net/gh/golang/image@master/font/gofont/ttfs/Go-Mono-Bold.ttf') format('truetype');
-  font-weight: bold;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Go Mono';
-  src: url('https://cdn.jsdelivr.net/gh/golang/image@master/font/gofont/ttfs/Go-Mono-Italic.ttf') format('truetype');
-  font-weight: normal;
-  font-style: italic;
-}
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
 
 :root {
-  --canvas: #F4F2F5;
-  --ink: #3A323D;
-  --ink-soft: #79676D;
-  --sage: #7A8A8F;
-  --sage-deep: #677975;
-  --blush: #A18FAF;
-  --line: #E0DDE2;
+  --canvas: #FBF7F5;
+  --surface: #FFFFFF;
+  --ink: #2E2530;
+  --ink-soft: #8A7B82;
+  --sage: #8FA69B;
+  --sage-deep: #5E8177;
+  --blush: #E7A6B0;
+  --blush-deep: #D6788A;
+  --gold: #E7C27A;
+  --line: #EDE3E0;
+  --shadow: 0 10px 30px rgba(90, 60, 70, 0.08);
+  --shadow-hover: 0 16px 36px rgba(90, 60, 70, 0.14);
+  --radius: 18px;
 }
 
 * {
@@ -32,26 +21,29 @@
 }
 
 body {
-  font-family: 'Go Mono', ui-monospace, Consolas, monospace;
-  font-size: 18px;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
   color: var(--ink);
   background: var(--canvas);
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(231, 166, 176, 0.14), transparent 40%),
+    radial-gradient(circle at 100% 10%, rgba(143, 166, 155, 0.14), transparent 45%);
   margin: 0;
-  padding: 32px 24px 64px 40px;
-  line-height: 1.6;
-  max-width: 1100px;
+  padding: 0 0 64px;
+  line-height: 1.65;
 }
 
 h1, h2, h3 {
-  font-family: inherit;
-  font-weight: bold;
+  font-family: 'Playfair Display', 'Poppins', serif;
+  font-weight: 700;
   line-height: 1.25;
   margin: 0 0 12px;
+  color: var(--ink);
 }
 
-h1 { font-size: 2rem; }
-h2 { font-size: 1.4rem; margin-top: 28px; }
-h3 { font-size: 1.15rem; margin-bottom: 3px; }
+h1 { font-size: 2.2rem; }
+h2 { font-size: 1.5rem; margin-top: 34px; }
+h3 { font-size: 1.2rem; margin-bottom: 4px; }
 
 p {
   margin: 0 0 10px;
@@ -59,60 +51,101 @@ p {
 
 a {
   color: var(--sage-deep);
+  text-decoration: none;
 }
 
 a:hover {
-  color: var(--blush);
+  color: var(--blush-deep);
 }
 
 hr {
   border: none;
   border-top: 1px solid var(--line);
-  margin: 22px 0;
+  margin: 26px 0;
 }
 
+/* ---------- Header ---------- */
+
 #siteBrand {
-  margin-bottom: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding: 18px 40px;
+  margin-bottom: 8px;
 }
 
 .brand {
-  font-weight: bold;
-  font-size: 1.6rem;
-  color: var(--ink);
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.7rem;
+  color: var(--sage-deep);
+  letter-spacing: 0.5px;
+}
+
+.brand::before {
+  content: '✿ ';
+  color: var(--blush-deep);
 }
 
 .greeting {
-  margin: 4px 0 0;
+  margin: 0;
   color: var(--ink-soft);
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 #modeNote {
   color: var(--ink-soft);
-  font-size: 1rem;
+  font-size: 0.95rem;
+  padding: 0 40px;
 }
+
+/* ---------- Layout ---------- */
 
 .layout {
   display: flex;
   align-items: flex-start;
-  gap: 48px;
+  gap: 36px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 40px 0;
 }
 
 #siteNav {
-  flex: 0 0 190px;
+  position: sticky;
+  top: 96px;
+  flex: 0 0 200px;
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow);
 }
 
 #siteNav a {
   display: block;
   color: var(--ink-soft);
-  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 9px 12px;
+  border-radius: 10px;
   white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 #siteNav a:hover {
-  color: var(--blush);
+  color: var(--sage-deep);
+  background: rgba(143, 166, 155, 0.12);
 }
 
 .layout main {
@@ -121,20 +154,41 @@ hr {
 }
 
 @media (max-width: 720px) {
+  #siteBrand {
+    padding: 16px 20px;
+  }
+  #modeNote {
+    padding: 0 20px;
+  }
   .layout {
     flex-direction: column;
-    gap: 4px;
+    gap: 16px;
+    padding: 16px 20px 0;
   }
   #siteNav {
+    position: static;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 4px 16px;
-    margin-bottom: 20px;
+    width: 100%;
+    gap: 4px 8px;
   }
 }
 
+/* ---------- Forms ---------- */
+
 form {
   margin: 14px 0;
+}
+
+form p {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 14px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--ink-soft);
 }
 
 label {
@@ -143,77 +197,166 @@ label {
 
 input, select, textarea {
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.98rem;
   color: var(--ink);
-  background: var(--canvas);
+  background: var(--surface);
   border: 1px solid var(--line);
-  padding: 5px 8px;
+  border-radius: 10px;
+  padding: 9px 14px;
   margin: 2px 0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type=text], input[type=email], input[type=password], input[type=tel],
+input[type=date], input[type=time], select, textarea {
+  width: 100%;
+  max-width: 320px;
+}
+
+input[type=number] {
+  width: 90px;
+}
+
+input[type=checkbox], input[type=radio] {
+  width: auto;
+  margin-right: 4px;
 }
 
 input:focus, select:focus, textarea:focus {
-  outline: 1px solid var(--sage-deep);
+  outline: none;
   border-color: var(--sage-deep);
+  box-shadow: 0 0 0 3px rgba(94, 129, 119, 0.15);
 }
 
 button {
   font-family: inherit;
-  font-size: 1rem;
-  background: none;
-  color: var(--sage-deep);
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: var(--sage-deep);
+  color: #fff;
   border: none;
-  padding: 2px 0;
-  margin: 2px 14px 2px 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  margin: 4px 10px 4px 0;
   cursor: pointer;
-  text-decoration: underline;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(94, 129, 119, 0.25);
 }
 
 button:hover:not(:disabled) {
-  color: var(--blush);
+  background: var(--blush-deep);
+  box-shadow: 0 6px 16px rgba(214, 120, 138, 0.3);
+  transform: translateY(-1px);
 }
 
 button:disabled {
+  background: var(--line);
   color: var(--ink-soft);
-  text-decoration: none;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .panel {
-  max-width: 460px;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 32px 36px;
+  box-shadow: var(--shadow);
+  margin: 12px auto 0;
 }
+
+/* ---------- Cards ---------- */
 
 .card {
   padding: 0;
-  margin: 0 0 18px;
+  margin: 0;
   border: none;
 }
 
-#bouquetList, #flowerList, #userList, #orderList, #allBouquetsList, #cartList {
-  border-top: 1px solid var(--line);
+#bouquetList, #allBouquetsList, #cartList, #flowerList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 22px;
+  border-top: none;
+  margin-top: 20px;
 }
 
-#bouquetList .card, #flowerList .card, #userList .card,
-#orderList .card, #allBouquetsList .card, #cartList .card {
+#bouquetList .card, #allBouquetsList .card, #cartList .card, #flowerList .card {
+  border: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  padding: 16px 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0 0 18px;
+  box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#bouquetList .card:hover, #allBouquetsList .card:hover, #cartList .card:hover, #flowerList .card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+#bouquetList .card::before, #allBouquetsList .card::before, #cartList .card::before, #flowerList .card::before {
+  content: '';
+  display: block;
+  height: 120px;
+  background: linear-gradient(135deg, var(--blush) 0%, var(--gold) 55%, var(--sage) 100%);
+  opacity: 0.85;
+}
+
+#bouquetList .card > *, #allBouquetsList .card > *, #cartList .card > *, #flowerList .card > * {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+#bouquetList .card > *:first-of-type, #allBouquetsList .card > *:first-of-type,
+#cartList .card > *:first-of-type, #flowerList .card > *:first-of-type {
+  margin-top: 16px;
+}
+
+#bouquetList .card > button, #allBouquetsList .card > button, #cartList .card > button, #flowerList .card > button {
+  margin-left: 20px;
+  align-self: flex-start;
+}
+
+#userList, #orderList {
+  border-top: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+#userList .card, #orderList .card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
 }
 
 .card h3 {
   font-style: italic;
+  color: var(--sage-deep);
 }
 
 .card p {
   color: var(--ink-soft);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 pre {
-  font-family: 'Go Mono', ui-monospace, Consolas, monospace;
-  font-size: 0.85rem;
-  background: var(--canvas);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 14px 0;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.82rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
   overflow-x: auto;
   color: var(--ink-soft);
+  box-shadow: var(--shadow);
 }
