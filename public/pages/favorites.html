@@ -49,17 +49,19 @@ function renderFavorites(list) {
     const div = document.createElement('div');
     div.className = 'card';
 
-    const componentsText = bouquet.components
-      .map(c => `${c.name} × ${c.quantity} (${c.price}₽/шт)`)
-      .join(', ');
-
     div.innerHTML = `
-      <h3>${bouquet.name}</h3>
-      <p>${bouquet.description}</p>
-      <p>Состоит из: ${componentsText}</p>
-      <p>Цена: ${bouquet.price.toFixed(2)}₽</p>
-      <p>В наличии: ${bouquet.availability}</p>
+      <div class="card-media">
+        ${bouquet.image_url ? `<img src="${bouquet.image_url}" alt="${bouquet.name}" onerror="this.remove()">` : ''}
+      </div>
+      <div class="card-body">
+        <h3>${bouquet.name}</h3>
+        <p class="card-desc">${bouquet.description}</p>
+        <p class="card-price">${bouquet.price.toFixed(2)}₽</p>
+      </div>
     `;
+
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
 
     const addBtn = document.createElement('button');
     addBtn.textContent = bouquet.availability > 0 ? 'В корзину' : 'Нет в наличии';
@@ -70,8 +72,9 @@ function renderFavorites(list) {
     removeBtn.textContent = 'Убрать из избранного';
     removeBtn.onclick = () => removeFavorite(bouquet.id);
 
-    div.appendChild(addBtn);
-    div.appendChild(removeBtn);
+    actions.appendChild(addBtn);
+    actions.appendChild(removeBtn);
+    div.appendChild(actions);
     container.appendChild(div);
   });
 }

@@ -104,33 +104,36 @@ function renderBouquets(list) {
     const div = document.createElement('div');
     div.className = 'card';
 
-    const componentsText = bouquet.components
-      .map(c => `${c.name} × ${c.quantity} (${c.price}₽/шт, в наличии ${c.stock})`)
-      .join(', ');
-
     div.innerHTML = `
-      <h3>${bouquet.name}</h3>
-      <p>${bouquet.description}</p>
-      <p>Состоит из: ${componentsText}</p>
-      <p>Цена: ${bouquet.price.toFixed(2)}₽</p>
-      <p>В наличии: ${bouquet.availability}</p>
+      <div class="card-media">
+        ${bouquet.image_url ? `<img src="${bouquet.image_url}" alt="${bouquet.name}" onerror="this.remove()">` : ''}
+      </div>
+      <div class="card-body">
+        <h3>${bouquet.name}</h3>
+        <p class="card-desc">${bouquet.description}</p>
+        <p class="card-price">${bouquet.price.toFixed(2)}₽</p>
+      </div>
     `;
+
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
 
     if (!isAdmin) {
       const addBtn = document.createElement('button');
       addBtn.textContent = bouquet.availability > 0 ? 'В корзину' : 'Нет в наличии';
       addBtn.disabled = bouquet.availability <= 0;
       addBtn.onclick = () => addToCart(bouquet.id, addBtn);
-      div.appendChild(addBtn);
+      actions.appendChild(addBtn);
 
       if (userToken) {
         const favBtn = document.createElement('button');
         favBtn.textContent = favoriteIds.has(bouquet.id) ? '★ В избранном' : '☆ В избранное';
         favBtn.onclick = () => toggleFavorite(bouquet.id, favBtn);
-        div.appendChild(favBtn);
+        actions.appendChild(favBtn);
       }
     }
 
+    div.appendChild(actions);
     container.appendChild(div);
   });
 }
