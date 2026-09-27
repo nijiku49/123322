@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Мои заказы — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<h1>Мои заказы</h1>
+
+<div id="orderList">Загрузка...</div>
+
+<script>
+const userToken = localStorage.getItem('flowershop_user_token');
+if (!userToken) {
+  window.location.href = '/login';
+}
+
+const STATUS_LABELS = {
+  new: 'Новый',
+  processing: 'В обработке',
+  delivered: 'Доставлен',
+  cancelled: 'Отменён'
+};
+
+async function loadOrders() {
+  const res = await fetch('/api/orders', { headers: { 'X-User-Token': userToken } });
+
+  if (!res.ok) {
+    window.location.href = '/login';
+    return;
+  }
+
+  const data = await res.json();
+  renderOrders(data);
+}
+
+function renderOrders(orders) {
+  const container = document.getElementById('orderList');
+  container.innerHTML = '';
+
+  if (orders.length === 0) {
+    container.textContent = 'У вас пока нет заказов.';
+    return;
+  }
+
+  orders.forEach(order => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    const itemsText = order.items.map(i => `${i.name} × ${i.quantity} (${i.price}₽)`).join(', ');
+
+    let html = `
+      <strong>Заказ №${order.id}</strong> от ${order.created_at}<br>
+      Статус: <strong>${STATUS_LABELS[order.status] || order.status}</strong><br>
+      Товары: ${itemsText}<br>
+      Адрес доставки: ${order.delivery_address}<br>
+      Телефон: ${order.phone}<br>
+      Дата и время доставки: ${order.delivery_date} ${order.delivery_time}<br>
+    `;
+
+    if (order.has_postcard) {
+      html += `Открытка: "${order.postcard_text}"<br>`;
+    }
+
+    if (order.status === 'cancelled' && order.cancel_reason) {
+      html += `<strong>Причина отмены:</strong> ${order.cancel_reason}<br>`;
+    }
+
+    div.innerHTML = html;
+
+    if (order.status === 'new' || order.status === 'processing') {
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = 'Отменить заказ';
+      cancelBtn.onclick = () => cancelOrder(order.id);
+      div.appendChild(cancelBtn);
+    }
+
+    container.appendChild(div);
+  });
+}
+
+async function cancelOrder(orderId) {
+  const reason = prompt('Почему вы отменяете заказ?');
+  if (!reason || !reason.trim()) {
+    alert('Без причины отменить заказ нельзя');
+    return;
+  }
+
+  const res = await fetch('/api/orders/' + orderId, {
+    method: 'PUT',
+    headers: { 'X-User-Token': userToken },
+    body: JSON.stringify({ status: 'cancelled', reason: reason.trim() })
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert('Ошибка: ' + (data.error || 'неизвестная ошибка'));
+  }
+
+  loadOrders();
+}
+
+renderSiteHeader();
+loadOrders();
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

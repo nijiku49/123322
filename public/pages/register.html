@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Регистрация — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<div class="panel">
+<h1>Регистрация</h1>
+
+<p><a href="/login">Уже есть аккаунт? Войти →</a></p>
+
+<!-- ===== Шаг 1: данные ===== -->
+<div id="step1">
+  <h2>Шаг 1 из 2</h2>
+  <form onsubmit="startRegister(event)">
+    <p>Имя: <input type="text" id="regName" required></p>
+    <p>Email: <input type="email" id="regEmail" required></p>
+    <p>Пароль: <input type="password" id="regPassword" required></p>
+    <button type="submit">Получить код на почту</button>
+  </form>
+</div>
+
+<!-- ===== Шаг 2: код ===== -->
+<div id="step2" style="display:none;">
+  <h2>Шаг 2 из 2</h2>
+  <p>Код отправлен на <span id="regEmailShown"></span></p>
+  <form onsubmit="verifyRegister(event)">
+    <p>Код из письма: <input type="text" id="regCode" maxlength="6" required></p>
+    <button type="submit">Подтвердить и создать аккаунт</button>
+  </form>
+</div>
+
+<p id="status"></p>
+</div>
+
+<script>
+renderSiteHeader();
+
+async function startRegister(event) {
+  event.preventDefault();
+  const statusEl = document.getElementById('status');
+
+  const body = {
+    name: document.getElementById('regName').value,
+    email: document.getElementById('regEmail').value,
+    password: document.getElementById('regPassword').value
+  };
+
+  const res = await fetch('/api/register', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    document.getElementById('regEmailShown').textContent = body.email;
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'block';
+    statusEl.textContent = '';
+  } else {
+    statusEl.textContent = 'Ошибка: ' + (data.error || 'неизвестная ошибка');
+  }
+}
+
+async function verifyRegister(event) {
+  event.preventDefault();
+  const statusEl = document.getElementById('status');
+
+  const body = {
+    email: document.getElementById('regEmail').value,
+    code: document.getElementById('regCode').value
+  };
+
+  const res = await fetch('/api/register/verify', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem('flowershop_user_token', data.token);
+    localStorage.setItem('flowershop_user_name', data.user.name);
+    window.location.href = '/';
+  } else {
+    statusEl.textContent = 'Ошибка: ' + (data.error || 'неизвестная ошибка');
+  }
+}
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

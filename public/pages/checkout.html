@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Оформление заказа — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<h1>Оформление заказа</h1>
+
+<p><a href="/cart">← Назад в корзину</a></p>
+
+<div id="summary">Загрузка...</div>
+
+<hr>
+
+<h2>Доставка</h2>
+<p>
+  Сохранённый адрес:
+  <select id="savedAddressSelect" onchange="fillFromSavedAddress()">
+    <option value="">— ввести новый —</option>
+  </select>
+</p>
+<form id="deliveryForm">
+  <p>Адрес доставки: <input type="text" id="deliveryAddress" size="40" required></p>
+  <p>Телефон: <input type="tel" id="phone" placeholder="+7 900 123-45-67" required></p>
+  <p>Дата доставки: <input type="date" id="deliveryDate" required></p>
+  <p>Время доставки: <input type="time" id="deliveryTime" required></p>
+  <p>
+    <label>
+      <input type="checkbox" id="saveAddressCheckbox">
+      Сохранить этот адрес на будущее
+    </label>
+    (название, например "Дом": <input type="text" id="addressLabel" size="15">)
+  </p>
+</form>
+
+<hr>
+
+<p id="status"></p>
+
+<div id="confirmedBox" style="display:none;">
+  <p>Заказ №<span id="orderId"></span> оформлен! Спасибо за покупку 🌸</p>
+  <p><a href="/">На главную →</a> | <a href="/orders">Мои заказы →</a></p>
+</div>
+
+<button onclick="confirmOrder()" id="confirmBtn">Подтвердить заказ</button>
+
+<script>
+const userToken = localStorage.getItem('flowershop_user_token');
+if (!userToken) {
+  window.location.href = '/login';
+}
+
+let savedAddresses = [];
+
+async function loadAddresses() {
+  const res = await fetch('/api/addresses', { headers: { 'X-User-Token': userToken } });
+  if (!res.ok) return;
+
+  savedAddresses = await res.json();
+  const select = document.getElementById('savedAddressSelect');
+
+  savedAddresses.forEach(addr => {
+    const option = document.createElement('option');
+    option.value = addr.id;
+    option.textContent = (addr.label ? addr.label + ' — ' : '') + addr.address;
+    select.appendChild(option);
+  });
+}
+
+function fillFromSavedAddress() {
+  const id = document.getElementById('savedAddressSelect').value;
+  if (!id) return;
+
+  const addr = savedAddresses.find(a => a.id === parseInt(id));
+  if (addr) {
+    document.getElementById('deliveryAddress').value = addr.address;
+    document.getElementById('phone').value = addr.phone;
+  }
+}
+
+async function loadSummary() {
+  const res = await fetch('/api/cart', { headers: { 'X-User-Token': userToken } });
+
+  if (!res.ok) {
+    window.location.href = '/login';
+    return;
+  }
+
+  const data = await res.json();
+  renderSummary(data);
+}
+
+function renderSummary(data) {
+  const container = document.getElementById('summary');
+
+  if (data.items.length === 0) {
+    container.textContent = 'Корзина пуста — нечего оформлять.';
+    document.getElementById('confirmBtn').disabled = true;
+    return;
+  }
+
+  let total = 0;
+  let html = '<h2>Состав заказа</h2>';
+
+  data.items.forEach(item => {
+    total += item.price * item.quantity;
+    html += `<p>${item.name} — ${item.quantity} шт. × ${item.price}₽ = ${(item.price * item.quantity).toFixed(2)}₽</p>`;
+  });
+
+  html += `<p><strong>Итого: ${total.toFixed(2)}₽</strong></p>`;
+
+  if (data.postcard.has_postcard) {
+    html += `<h2>Открытка</h2><p>"${data.postcard.postcard_text}"</p>`;
+  }
+
+  container.innerHTML = html;
+}
+
+async function confirmOrder() {
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('confirmBtn');
+
+  const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const deliveryDate = document.getElementById('deliveryDate').value;
+  const deliveryTime = document.getElementById('deliveryTime').value;
+
+  if (!deliveryAddress || !phone || !deliveryDate || !deliveryTime) {
+    statusEl.textContent = 'Заполните адрес, телефон, дату и время доставки';
+    return;
+  }
+
+  btn.disabled = true;
+
+  const res = await fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'X-User-Token': userToken },
+    body: JSON.stringify({
+      delivery_address: deliveryAddress,
+      phone: phone,
+      delivery_date: deliveryDate,
+      delivery_time: deliveryTime
+    })
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    if (document.getElementById('saveAddressCheckbox').checked) {
+      const label = document.getElementById('addressLabel').value.trim();
+      fetch('/api/addresses', {
+        method: 'POST',
+        headers: { 'X-User-Token': userToken },
+        body: JSON.stringify({ label: label, address: deliveryAddress, phone: phone })
+      });
+    }
+
+    document.getElementById('orderId').textContent = data.order_id;
+    document.getElementById('confirmedBox').style.display = 'block';
+    document.getElementById('summary').style.display = 'none';
+    document.getElementById('deliveryForm').style.display = 'none';
+    btn.style.display = 'none';
+    statusEl.textContent = '';
+  } else {
+    statusEl.textContent = 'Ошибка: ' + (data.error || 'неизвестная ошибка');
+    btn.disabled = false;
+  }
+}
+
+renderSiteHeader();
+loadSummary();
+loadAddresses();
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

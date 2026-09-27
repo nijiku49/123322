@@ -1,0 +1,219 @@
+@font-face {
+  font-family: 'Go Mono';
+  src: url('https://cdn.jsdelivr.net/gh/golang/image@master/font/gofont/ttfs/Go-Mono.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Go Mono';
+  src: url('https://cdn.jsdelivr.net/gh/golang/image@master/font/gofont/ttfs/Go-Mono-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Go Mono';
+  src: url('https://cdn.jsdelivr.net/gh/golang/image@master/font/gofont/ttfs/Go-Mono-Italic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
+
+:root {
+  --canvas: #F4F2F5;
+  --ink: #3A323D;
+  --ink-soft: #79676D;
+  --sage: #7A8A8F;
+  --sage-deep: #677975;
+  --blush: #A18FAF;
+  --line: #E0DDE2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Go Mono', ui-monospace, Consolas, monospace;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--canvas);
+  margin: 0;
+  padding: 32px 24px 64px 40px;
+  line-height: 1.6;
+  max-width: 1100px;
+}
+
+h1, h2, h3 {
+  font-family: inherit;
+  font-weight: bold;
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.4rem; margin-top: 28px; }
+h3 { font-size: 1.15rem; margin-bottom: 3px; }
+
+p {
+  margin: 0 0 10px;
+}
+
+a {
+  color: var(--sage-deep);
+}
+
+a:hover {
+  color: var(--blush);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 22px 0;
+}
+
+#siteBrand {
+  margin-bottom: 24px;
+}
+
+.brand {
+  font-weight: bold;
+  font-size: 1.6rem;
+  color: var(--ink);
+}
+
+.greeting {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+
+#modeNote {
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+
+.layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 48px;
+}
+
+#siteNav {
+  flex: 0 0 190px;
+  display: flex;
+  flex-direction: column;
+}
+
+#siteNav a {
+  display: block;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+#siteNav a:hover {
+  color: var(--blush);
+}
+
+.layout main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    flex-direction: column;
+    gap: 4px;
+  }
+  #siteNav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-bottom: 20px;
+  }
+}
+
+form {
+  margin: 14px 0;
+}
+
+label {
+  color: var(--ink);
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  padding: 5px 8px;
+  margin: 2px 0;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 1px solid var(--sage-deep);
+  border-color: var(--sage-deep);
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  background: none;
+  color: var(--sage-deep);
+  border: none;
+  padding: 2px 0;
+  margin: 2px 14px 2px 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+button:hover:not(:disabled) {
+  color: var(--blush);
+}
+
+button:disabled {
+  color: var(--ink-soft);
+  text-decoration: none;
+  cursor: not-allowed;
+}
+
+.panel {
+  max-width: 460px;
+}
+
+.card {
+  padding: 0;
+  margin: 0 0 18px;
+  border: none;
+}
+
+#bouquetList, #flowerList, #userList, #orderList, #allBouquetsList, #cartList {
+  border-top: 1px solid var(--line);
+}
+
+#bouquetList .card, #flowerList .card, #userList .card,
+#orderList .card, #allBouquetsList .card, #cartList .card {
+  border-bottom: 1px solid var(--line);
+  padding: 16px 0;
+}
+
+.card h3 {
+  font-style: italic;
+}
+
+.card p {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+pre {
+  font-family: 'Go Mono', ui-monospace, Consolas, monospace;
+  font-size: 0.85rem;
+  background: var(--canvas);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+  overflow-x: auto;
+  color: var(--ink-soft);
+}

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Админ-панель — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<h1>Админ-панель</h1>
+
+<p><a href="/build">Собрать каталожный букет</a></p>
+
+<p id="authStatus"></p>
+
+<hr>
+
+<h2>Дашборд</h2>
+<div id="statsBox">Загрузка...</div>
+
+<hr>
+
+<h2>Список товаров</h2>
+<div id="flowerList">Загрузка...</div>
+
+<hr>
+
+<h2>Добавить товар</h2>
+<form onsubmit="addFlower(event)">
+  <p>Название: <input type="text" id="name" required></p>
+  <p>Описание: <input type="text" id="description"></p>
+  <p>Цена: <input type="number" id="price" step="0.01" required></p>
+  <p>Количество: <input type="number" id="stock" required></p>
+  <p>URL картинки: <input type="text" id="image_url"></p>
+  <button type="submit">Добавить</button>
+</form>
+
+<hr>
+
+<h2>Изменить товар</h2>
+<form onsubmit="updateFlower(event)">
+  <p>ID товара: <input type="number" id="editId" required></p>
+  <p>Название: <input type="text" id="editName" required></p>
+  <p>Описание: <input type="text" id="editDescription"></p>
+  <p>Цена: <input type="number" id="editPrice" step="0.01" required></p>
+  <p>Количество: <input type="number" id="editStock" required></p>
+  <p>URL картинки: <input type="text" id="editImageUrl"></p>
+  <button type="submit">Сохранить изменения</button>
+</form>
+
+<hr>
+
+<h2>Удалить товар по ID</h2>
+<input type="number" id="deleteId">
+<button onclick="deleteFlower()">Удалить</button>
+
+<hr>
+
+<h2>Пользователи</h2>
+<div id="userList">Загрузка...</div>
+
+<h3>Изменить пользователя</h3>
+<form onsubmit="updateUser(event)">
+  <p>ID пользователя: <input type="number" id="editUserId" required></p>
+  <p>Имя: <input type="text" id="editUserName" required></p>
+  <p>Email: <input type="email" id="editUserEmail" required></p>
+  <p>Новый пароль (оставьте пустым, если не меняете): <input type="text" id="editUserPassword"></p>
+  <button type="submit">Сохранить</button>
+</form>
+
+<hr>
+
+<h2>Заказы</h2>
+<p>
+  Фильтр по покупателю:
+  <select id="orderUserFilter" onchange="loadOrders()">
+    <option value="">Все заказы</option>
+  </select>
+</p>
+<div id="orderList">Загрузка...</div>
+
+<hr>
+
+<h2>Все букеты (каталожные и личные пользователей)</h2>
+<div id="allBouquetsList">Загрузка...</div>
+
+<h3>Редактировать букет</h3>
+<form onsubmit="updateBouquet(event)">
+  <p>ID букета: <input type="number" id="editBouquetId" required></p>
+  <p>Название: <input type="text" id="editBouquetName" required></p>
+  <p>Описание: <input type="text" id="editBouquetDescription" size="40"></p>
+  <p>URL картинки: <input type="text" id="editBouquetImageUrl" size="40"></p>
+  <p>Состав:</p>
+  <div id="editBouquetItems">Сначала нажмите «Редактировать» у букета в списке выше.</div>
+  <button type="submit">Сохранить букет</button>
+</form>
+
+<hr>
+
+<h2>Сырой ответ сервера (для отладки)</h2>
+<pre id="rawResponse"></pre>
+
+<script>
+/* Токен кладёт login.html после успешного входа администратора */
+function authHeaders() {
+  const token = localStorage.getItem('flowershop_admin_token');
+  if (!token) {
+    alert('Вы не залогинены как администратор. Сначала войдите через /login');
+  }
+  return { 'X-Admin-Token': token || '' };
+}
+
+async function loadFlowers() {
+  const res = await fetch('/api/flowers');
+  const data = await res.json();
+
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  const container = document.getElementById('flowerList');
+  container.innerHTML = '';
+
+  data.forEach(flower => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent =
+      `#${flower.id} | ${flower.name} | ${flower.price}₽ | склад: ${flower.stock} | ${flower.description} `;
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Редактировать';
+    editBtn.onclick = () => fillEditForm(flower);
+
+    div.appendChild(editBtn);
+    container.appendChild(div);
+  });
+}
+
+function fillEditForm(flower) {
+  document.getElementById('editId').value = flower.id;
+  document.getElementById('editName').value = flower.name;
+  document.getElementById('editDescription').value = flower.description;
+  document.getElementById('editPrice').value = flower.price;
+  document.getElementById('editStock').value = flower.stock;
+  document.getElementById('editImageUrl').value = flower.image_url;
+}
+
+async function updateFlower(event) {
+  event.preventDefault();
+
+  const id = document.getElementById('editId').value;
+  const body = {
+    name: document.getElementById('editName').value,
+    description: document.getElementById('editDescription').value,
+    price: parseFloat(document.getElementById('editPrice').value),
+    stock: parseInt(document.getElementById('editStock').value),
+    image_url: document.getElementById('editImageUrl').value
+  };
+
+  const res = await fetch('/api/flowers/' + id, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadFlowers();
+}
+
+async function addFlower(event) {
+  event.preventDefault();
+
+  const body = {
+    name: document.getElementById('name').value,
+    description: document.getElementById('description').value,
+    price: parseFloat(document.getElementById('price').value),
+    stock: parseInt(document.getElementById('stock').value),
+    image_url: document.getElementById('image_url').value
+  };
+
+  const res = await fetch('/api/flowers', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadFlowers();
+}
+
+async function deleteFlower() {
+  const id = document.getElementById('deleteId').value;
+  if (!id) return;
+
+  const res = await fetch('/api/flowers/' + id, {
+    method: 'DELETE',
+    headers: authHeaders()
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  if (res.ok && data.cancelled_orders > 0) {
+    alert(`Внимание: этот цветок использовался в активных заказах. Автоматически отменено заказов: ${data.cancelled_orders}`);
+  }
+
+  loadFlowers();
+  loadOrders();
+  loadStats();
+}
+
+/* ---------- Пользователи ---------- */
+
+async function loadUsers() {
+  const res = await fetch('/api/users', { headers: authHeaders() });
+  const data = await res.json();
+
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  const container = document.getElementById('userList');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data)) return; /* например, 401 если токен истёк */
+
+  /* Обновляем выпадающий список фильтра заказов, сохраняя текущий выбор */
+  const filterSelect = document.getElementById('orderUserFilter');
+  const currentFilterValue = filterSelect.value;
+  filterSelect.innerHTML = '<option value="">Все заказы</option>';
+  data.forEach(user => {
+    const option = document.createElement('option');
+    option.value = user.id;
+    option.textContent = `${user.name} (${user.email})`;
+    filterSelect.appendChild(option);
+  });
+  filterSelect.value = currentFilterValue;
+
+  data.forEach(user => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.textContent = `#${user.id} | ${user.name} | ${user.email} `;
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Редактировать';
+    editBtn.onclick = () => fillEditUserForm(user);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Удалить';
+    deleteBtn.onclick = () => deleteUser(user.id);
+
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+    container.appendChild(div);
+  });
+}
+
+function fillEditUserForm(user) {
+  document.getElementById('editUserId').value = user.id;
+  document.getElementById('editUserName').value = user.name;
+  document.getElementById('editUserEmail').value = user.email;
+  document.getElementById('editUserPassword').value = '';
+}
+
+async function updateUser(event) {
+  event.preventDefault();
+
+  const id = document.getElementById('editUserId').value;
+  const password = document.getElementById('editUserPassword').value;
+
+  const body = {
+    name: document.getElementById('editUserName').value,
+    email: document.getElementById('editUserEmail').value
+  };
+  if (password) body.password = password; /* пустое поле — пароль не трогаем */
+
+  const res = await fetch('/api/users/' + id, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadUsers();
+}
+
+async function deleteUser(id) {
+  if (!confirm('Удалить пользователя #' + id + '?')) return;
+
+  const res = await fetch('/api/users/' + id, {
+    method: 'DELETE',
+    headers: authHeaders()
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadUsers();
+}
+
+/* ---------- Заказы ---------- */
+
+const STATUS_LABELS = {
+  new: 'Новый',
+  processing: 'В обработке',
+  delivered: 'Доставлен',
+  cancelled: 'Отменён'
+};
+
+async function loadOrders() {
+  const filterUserId = document.getElementById('orderUserFilter').value;
+  const url = filterUserId ? `/api/orders?user_id=${filterUserId}` : '/api/orders';
+
+  const res = await fetch(url, { headers: authHeaders() });
+  const data = await res.json();
+
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  const container = document.getElementById('orderList');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data)) return;
+
+  if (data.length === 0) {
+    container.textContent = 'Заказов пока нет.';
+    return;
+  }
+
+  data.forEach(order => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    let itemsText = order.items.map(i => `${i.name} × ${i.quantity} (${i.price}₽)`).join(', ');
+    let html = `
+      <strong>Заказ #${order.id}</strong> от ${order.created_at}<br>
+      Покупатель: ${order.user_name} (${order.user_email})<br>
+      Товары: ${itemsText}<br>
+      Адрес: ${order.delivery_address} | Телефон: ${order.phone}<br>
+      Доставка: ${order.delivery_date} ${order.delivery_time}<br>
+    `;
+
+    if (order.has_postcard) {
+      html += `Открытка: "${order.postcard_text}"<br>`;
+    }
+
+    if (order.status === 'cancelled' && order.cancel_reason) {
+      html += `<strong>Причина отмены:</strong> ${order.cancel_reason}<br>`;
+    }
+
+    div.innerHTML = html;
+
+    const select = document.createElement('select');
+    ['new', 'processing', 'delivered', 'cancelled'].forEach(status => {
+      const option = document.createElement('option');
+      option.value = status;
+      option.textContent = STATUS_LABELS[status];
+      if (status === order.status) option.selected = true;
+      select.appendChild(option);
+    });
+
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Сохранить статус';
+    saveBtn.onclick = () => {
+      const chosenStatus = select.value;
+
+      if (chosenStatus === 'cancelled') {
+        const reason = prompt('Причина отмены заказа (обязательно):');
+        if (!reason || !reason.trim()) {
+          alert('Без причины отменить заказ нельзя');
+          return;
+        }
+        setOrderStatus(order.id, chosenStatus, reason.trim());
+      } else {
+        setOrderStatus(order.id, chosenStatus);
+      }
+    };
+
+    div.appendChild(select);
+    div.appendChild(saveBtn);
+
+    container.appendChild(div);
+  });
+}
+
+async function setOrderStatus(orderId, status, reason) {
+  const body = { status: status };
+  if (reason) body.reason = reason;
+
+  const res = await fetch('/api/orders/' + orderId, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadOrders();
+  loadStats();
+}
+
+const savedToken = localStorage.getItem('flowershop_admin_token');
+document.getElementById('authStatus').textContent = savedToken
+  ? '✓ Вы вошли как администратор (' + (localStorage.getItem('flowershop_admin_email') || '') + ')'
+  : '✗ Вы не вошли — перейдите на /login';
+
+/* ---------- Все букеты (каталожные + личные пользователей) ---------- */
+
+let allFlowersForEdit = [];
+
+async function loadAllBouquets() {
+  const res = await fetch('/api/bouquets/all', { headers: authHeaders() });
+  const data = await res.json();
+
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  const container = document.getElementById('allBouquetsList');
+  container.innerHTML = '';
+
+  if (!Array.isArray(data)) return;
+
+  data.forEach(bouquet => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    const ownerText = bouquet.owner_user_id === -1
+      ? 'Каталожный (виден всем)'
+      : `Личный — ${bouquet.owner_name} (${bouquet.owner_email})`;
+
+    const componentsText = bouquet.components.map(c => `${c.name} × ${c.quantity}`).join(', ');
+
+    div.innerHTML = `
+      <strong>#${bouquet.id} ${bouquet.name}</strong><br>
+      ${ownerText}<br>
+      Состав: ${componentsText}<br>
+      Цена: ${bouquet.price.toFixed(2)}₽ | В наличии: ${bouquet.availability}<br>
+    `;
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Редактировать';
+    editBtn.onclick = () => fillEditBouquetForm(bouquet);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Удалить';
+    deleteBtn.onclick = () => deleteBouquetAdmin(bouquet.id);
+
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+    container.appendChild(div);
+  });
+}
+
+async function fillEditBouquetForm(bouquet) {
+  document.getElementById('editBouquetId').value = bouquet.id;
+  document.getElementById('editBouquetName').value = bouquet.name;
+  document.getElementById('editBouquetDescription').value = bouquet.description;
+  document.getElementById('editBouquetImageUrl').value = bouquet.image_url;
+
+  if (allFlowersForEdit.length === 0) {
+    const res = await fetch('/api/flowers');
+    allFlowersForEdit = await res.json();
+  }
+
+  const container = document.getElementById('editBouquetItems');
+  container.innerHTML = '';
+
+  allFlowersForEdit.forEach(flower => {
+    const existing = bouquet.components.find(c => c.flower_id === flower.id);
+    const row = document.createElement('p');
+    row.innerHTML = `${flower.name} (${flower.price}₽/шт, в наличии ${flower.stock}): `;
+
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.min = '0';
+    qtyInput.value = existing ? existing.quantity : '0';
+    qtyInput.size = 4;
+    qtyInput.dataset.flowerId = flower.id;
+    qtyInput.className = 'editBouquetQtyInput';
+
+    row.appendChild(qtyInput);
+    container.appendChild(row);
+  });
+}
+
+async function updateBouquet(event) {
+  event.preventDefault();
+
+  const id = document.getElementById('editBouquetId').value;
+
+  const items = [];
+  document.querySelectorAll('.editBouquetQtyInput').forEach(input => {
+    const qty = parseInt(input.value) || 0;
+    if (qty > 0) {
+      items.push({ flower_id: parseInt(input.dataset.flowerId), quantity: qty });
+    }
+  });
+
+  if (items.length === 0) {
+    alert('Состав не может быть пустым');
+    return;
+  }
+
+  const body = {
+    name: document.getElementById('editBouquetName').value,
+    description: document.getElementById('editBouquetDescription').value,
+    image_url: document.getElementById('editBouquetImageUrl').value,
+    items: items
+  };
+
+  const res = await fetch('/api/bouquets/' + id, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadAllBouquets();
+}
+
+async function deleteBouquetAdmin(id) {
+  if (!confirm('Удалить букет #' + id + '? Это может быть личный букет пользователя.')) return;
+
+  const res = await fetch('/api/bouquets/' + id, {
+    method: 'DELETE',
+    headers: authHeaders()
+  });
+
+  const data = await res.json();
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  loadAllBouquets();
+}
+
+/* ---------- Дашборд ---------- */
+
+const STATUS_LABELS_STATS = {
+  new: 'Новых',
+  processing: 'В обработке',
+  delivered: 'Доставлено',
+  cancelled: 'Отменено'
+};
+
+async function loadStats() {
+  const res = await fetch('/api/stats', { headers: authHeaders() });
+  const data = await res.json();
+
+  document.getElementById('rawResponse').textContent = JSON.stringify(data, null, 2);
+
+  const box = document.getElementById('statsBox');
+
+  if (!res.ok) {
+    box.textContent = 'Не удалось загрузить статистику.';
+    return;
+  }
+
+  let html = '<p><strong>Заказы по статусам:</strong><br>';
+  for (const status in STATUS_LABELS_STATS) {
+    html += `${STATUS_LABELS_STATS[status]}: ${data.status_counts[status] || 0}<br>`;
+  }
+  html += '</p>';
+
+  html += `<p><strong>Выручка по доставленным заказам:</strong> ${data.revenue.toFixed(2)}₽</p>`;
+
+  html += '<p><strong>Топ-5 букетов по продажам:</strong><br>';
+  if (data.top_bouquets.length === 0) {
+    html += 'Пока нет данных.';
+  } else {
+    data.top_bouquets.forEach(b => {
+      html += `${b.name} — продано ${b.total_quantity} шт.<br>`;
+    });
+  }
+  html += '</p>';
+
+  box.innerHTML = html;
+}
+
+renderSiteHeader();
+loadFlowers();
+loadUsers();
+loadOrders();
+loadAllBouquets();
+loadStats();
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

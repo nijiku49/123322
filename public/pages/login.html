@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Вход — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<div class="panel">
+<h1>Вход</h1>
+
+<p><a href="/register">Нет аккаунта? Зарегистрироваться →</a></p>
+
+<form onsubmit="userLogin(event)">
+  <p>Email: <input type="email" id="email" required></p>
+  <p>Пароль: <input type="password" id="password" required></p>
+  <button type="submit">Войти</button>
+</form>
+
+<p id="status"></p>
+</div>
+
+<script>
+renderSiteHeader();
+
+async function userLogin(event) {
+  event.preventDefault();
+  const statusEl = document.getElementById('status');
+
+  const body = {
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value
+  };
+
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    if (data.role === 'admin') {
+      localStorage.setItem('flowershop_admin_token', data.token);
+      localStorage.setItem('flowershop_admin_email', data.email);
+      window.location.href = '/admin';
+    } else {
+      localStorage.setItem('flowershop_user_token', data.token);
+      localStorage.setItem('flowershop_user_name', data.name);
+      window.location.href = '/';
+    }
+  } else {
+    statusEl.textContent = 'Ошибка: ' + (data.error || 'неизвестная ошибка');
+  }
+}
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

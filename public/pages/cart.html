@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Корзина — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<h1>Корзина</h1>
+
+<div id="cartList">Загрузка...</div>
+
+<hr>
+
+<p>
+  <label>
+    <input type="checkbox" id="postcardCheckbox" onchange="togglePostcard()">
+    Добавить открытку к заказу
+  </label>
+</p>
+
+<div id="postcardBox" style="display:none;">
+  <p>Текст открытки:</p>
+  <textarea id="postcardText" rows="3" cols="40" placeholder="Например: Люблю тебя, мам &lt;3"></textarea>
+  <p><button onclick="savePostcard()">Сохранить текст открытки</button></p>
+</div>
+
+<hr>
+
+<p id="total"></p>
+<p id="status"></p>
+
+<button onclick="goCheckout()" id="checkoutBtn">Оформить заказ →</button>
+
+<script>
+const userToken = localStorage.getItem('flowershop_user_token');
+if (!userToken) {
+  window.location.href = '/login';
+}
+
+async function loadCart() {
+  const res = await fetch('/api/cart', { headers: { 'X-User-Token': userToken } });
+
+  if (!res.ok) {
+    window.location.href = '/login';
+    return;
+  }
+
+  const data = await res.json();
+  renderCart(data);
+}
+
+function renderCart(data) {
+  const container = document.getElementById('cartList');
+  container.innerHTML = '';
+
+  if (data.items.length === 0) {
+    container.textContent = 'Корзина пуста.';
+    document.getElementById('checkoutBtn').disabled = true;
+  } else {
+    document.getElementById('checkoutBtn').disabled = false;
+  }
+
+  let total = 0;
+
+  data.items.forEach(item => {
+    total += item.price * item.quantity;
+
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <strong>${item.name}</strong> — ${item.price}₽ × 
+    `;
+
+    const minusBtn = document.createElement('button');
+    minusBtn.textContent = '−';
+    minusBtn.onclick = () => changeQuantity(item.bouquet_id, item.quantity - 1);
+
+    const qtySpan = document.createElement('span');
+    qtySpan.textContent = ' ' + item.quantity + ' ';
+
+    const plusBtn = document.createElement('button');
+    plusBtn.textContent = '+';
+    plusBtn.disabled = item.quantity >= item.availability; /* нельзя набрать больше, чем позволяет склад */
+    plusBtn.onclick = () => changeQuantity(item.bouquet_id, item.quantity + 1);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = 'Удалить';
+    removeBtn.onclick = () => removeItem(item.bouquet_id);
+
+    div.appendChild(minusBtn);
+    div.appendChild(qtySpan);
+    div.appendChild(plusBtn);
+    div.appendChild(document.createTextNode(` = ${(item.price * item.quantity).toFixed(2)}₽ `));
+    div.appendChild(removeBtn);
+
+    if (item.quantity >= item.availability) {
+      const maxNote = document.createElement('em');
+      maxNote.textContent = ' (максимум по наличию)';
+      div.appendChild(maxNote);
+    }
+
+    container.appendChild(div);
+  });
+
+  document.getElementById('total').textContent = 'Итого: ' + total.toFixed(2) + '₽';
+
+  document.getElementById('postcardCheckbox').checked = data.postcard.has_postcard;
+  document.getElementById('postcardText').value = data.postcard.postcard_text || '';
+  document.getElementById('postcardBox').style.display = data.postcard.has_postcard ? 'block' : 'none';
+}
+
+async function changeQuantity(bouquetId, newQuantity) {
+  const res = await fetch('/api/cart/' + bouquetId, {
+    method: 'PUT',
+    headers: { 'X-User-Token': userToken },
+    body: JSON.stringify({ quantity: newQuantity })
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    document.getElementById('status').textContent = 'Ошибка: ' + (data.error || 'неизвестная ошибка');
+  } else {
+    document.getElementById('status').textContent = '';
+  }
+
+  loadCart();
+}
+
+async function removeItem(bouquetId) {
+  await fetch('/api/cart/' + bouquetId, {
+    method: 'DELETE',
+    headers: { 'X-User-Token': userToken }
+  });
+  loadCart();
+}
+
+function togglePostcard() {
+  const checked = document.getElementById('postcardCheckbox').checked;
+  document.getElementById('postcardBox').style.display = checked ? 'block' : 'none';
+  savePostcard(); /* сразу сохраняем состояние галочки, даже если текст ещё не ввели */
+}
+
+async function savePostcard() {
+  const hasPostcard = document.getElementById('postcardCheckbox').checked;
+  const text = document.getElementById('postcardText').value;
+
+  await fetch('/api/cart/postcard', {
+    method: 'PUT',
+    headers: { 'X-User-Token': userToken },
+    body: JSON.stringify({ has_postcard: hasPostcard, postcard_text: text })
+  });
+}
+
+function goCheckout() {
+  window.location.href = '/checkout';
+}
+
+renderSiteHeader();
+loadCart();
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

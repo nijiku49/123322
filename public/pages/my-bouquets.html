@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Мои букеты — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<h1>Мои букеты</h1>
+
+<p><a href="/build">Собрать новый →</a></p>
+
+<div id="bouquetList">Загрузка...</div>
+
+<script>
+const userToken = localStorage.getItem('flowershop_user_token');
+if (!userToken) {
+  window.location.href = '/login';
+}
+
+async function loadMyBouquets() {
+  const res = await fetch('/api/bouquets/mine', { headers: { 'X-User-Token': userToken } });
+
+  if (!res.ok) {
+    window.location.href = '/login';
+    return;
+  }
+
+  const data = await res.json();
+  renderBouquets(data);
+}
+
+function renderBouquets(list) {
+  const container = document.getElementById('bouquetList');
+  container.innerHTML = '';
+
+  if (list.length === 0) {
+    container.textContent = 'У вас пока нет своих букетов. Соберите первый!';
+    return;
+  }
+
+  list.forEach(bouquet => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    const componentsText = bouquet.components
+      .map(c => `${c.name} × ${c.quantity}`)
+      .join(', ');
+
+    div.innerHTML = `
+      <h3>${bouquet.name}</h3>
+      <p>${bouquet.description}</p>
+      <p>Состоит из: ${componentsText}</p>
+      <p>Цена: ${bouquet.price.toFixed(2)}₽</p>
+      <p>В наличии: ${bouquet.availability}</p>
+    `;
+
+    const addBtn = document.createElement('button');
+    addBtn.textContent = bouquet.availability > 0 ? 'В корзину' : 'Нет в наличии';
+    addBtn.disabled = bouquet.availability <= 0;
+    addBtn.onclick = () => addToCart(bouquet.id, addBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Удалить букет';
+    deleteBtn.onclick = () => deleteBouquet(bouquet.id);
+
+    div.appendChild(addBtn);
+    div.appendChild(deleteBtn);
+    container.appendChild(div);
+  });
+}
+
+async function addToCart(bouquetId, btn) {
+  const res = await fetch('/api/cart', {
+    method: 'POST',
+    headers: { 'X-User-Token': userToken },
+    body: JSON.stringify({ bouquet_id: bouquetId, quantity: 1 })
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    const original = btn.textContent;
+    btn.textContent = 'Добавлено ✓';
+    setTimeout(() => { btn.textContent = original; }, 1000);
+  } else {
+    alert(data.error || 'Не удалось добавить в корзину');
+  }
+}
+
+async function deleteBouquet(bouquetId) {
+  if (!confirm('Удалить этот букет насовсем?')) return;
+
+  await fetch('/api/bouquets/' + bouquetId, {
+    method: 'DELETE',
+    headers: { 'X-User-Token': userToken }
+  });
+  loadMyBouquets();
+}
+
+renderSiteHeader();
+loadMyBouquets();
+</script>
+
+</main>
+</div>
+
+</body>
+</html>

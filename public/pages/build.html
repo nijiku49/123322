@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Собрать букет — flowers</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/nav.js"></script>
+</head>
+<body>
+
+<header id="siteBrand"></header>
+
+<div class="layout">
+<nav id="siteNav"></nav>
+<main>
+
+<h1>Собрать букет</h1>
+
+<p id="modeNote"></p>
+
+<form onsubmit="submitBouquet(event)">
+  <p>Название букета: <input type="text" id="name" required></p>
+  <p>Описание: <input type="text" id="description" size="40"></p>
+  <p>URL картинки (необязательно): <input type="text" id="image_url" size="40"></p>
+
+  <h2>Состав</h2>
+  <div id="flowerPicker">Загрузка...</div>
+
+  <p><strong>Предварительная цена: <span id="previewPrice">0</span>₽</strong></p>
+
+  <button type="submit">Создать букет</button>
+</form>
+
+<p id="status"></p>
+
+<script>
+const adminToken = localStorage.getItem('flowershop_admin_token');
+const userToken = localStorage.getItem('flowershop_user_token');
+
+if (!adminToken && !userToken) {
+  window.location.href = '/login';
+}
+
+document.getElementById('modeNote').textContent = adminToken
+  ? 'Вы создаёте КАТАЛОЖНЫЙ букет — он будет виден и доступен всем покупателям.'
+  : 'Вы создаёте ЛИЧНЫЙ букет — он будет виден и доступен только вам.';
+
+let flowers = [];
+
+async function loadFlowers() {
+  const res = await fetch('/api/flowers');
+  flowers = await res.json();
+
+  const container = document.getElementById('flowerPicker');
+  container.innerHTML = '';
+
+  flowers.forEach(flower => {
+    const row = document.createElement('p');
+    row.innerHTML = `
+      ${flower.name} (${flower.price}₽/шт, в наличии ${flower.stock}):
+    `;
+
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.min = '0';
+    qtyInput.value = '0';
+    qtyInput.size = 4;
+    qtyInput.dataset.flowerId = flower.id;
+    qtyInput.oninput = updatePreviewPrice;
+
+    row.appendChild(qtyInput);
+    container.appendChild(row);
+  });
+}
+
+function updatePreviewPrice() {
+  let total = 0;
+  document.querySelectorAll('#flowerPicker input[type=number]').forEach(input => {
+    const qty = parseInt(input.value) || 0;
+    const flowerId = parseInt(input.dataset.flowerId);
+    const flower = flowers.find(f => f.id === flowerId);
+    if (flower && qty > 0) total += flower.price * qty;
+  });
+  document.getElementById('previewPrice').textContent = total.toFixed(2);
+}
+
+async function submitBouquet(event) {
+  event.preventDefault();
+  const statusEl = document.getElementById('status');
+
+  const items = [];
+  document.querySelectorAll('#flowerPicker input[type=number]').forEach(input => {
+    const qty = parseInt(input.value) || 0;
+    if (qty > 0) {
+      items.push({ flower_id: parseInt(input.dataset.flowerId), quantity: qty });
+    }
+  });
+
+  if (items.length === 0) {
+    statusEl.textContent = 'Добавьте хотя бы один цветок в состав';
+    return;
+  }
+
+  const body = {
+    name: document.getElementById('name').value,
+    description: document.getElementById('description').value,
+    image_url: document.getElementById('image_url').value,
+    items: items
+  };
+
+  const headers = adminToken ? { 'X-Admin-Token': adminToken } : { 'X-User-Token': userToken };
+
+  const res = await fetch('/api/bouquets', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+
+  if (res.ok) {
+    statusEl.textContent = 'Букет создан!';
+    window.location.href = adminToken ? '/' : '/my-bouquets';
+  } else {
+    statusEl.textContent = 'Ошибка: ' + (data.error || 'неизвестная ошибка');
+  }
+}
+
+renderSiteHeader();
+loadFlowers();
+</script>
+
+</main>
+</div>
+
+</body>
+</html>
